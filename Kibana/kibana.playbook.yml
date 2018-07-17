@@ -1,0 +1,72 @@
+---
+- hosts: localhost
+  connection: local
+  become: true
+  vars:
+    - kibana_ver: '6.3'
+
+  tasks:
+    - name: Installation apt-transport-https
+      apt:
+        name: "apt-transport-https"
+        state: "present"
+
+    - name: Installation ca-certificates
+      apt:
+        name: "ca-certificates"
+        state: "latest"
+
+    - name: Ajout de la clé du Repo Elasticsearch
+      apt_key:
+        url: "https://artifacts.elastic.co/GPG-KEY-elasticsearch"
+        state: "present"
+
+    - name: Ajout du Repo Kibana
+      #apt_repository:
+        #repo: "deb http://packages.elastic.co/kibana/{{ kibana_ver }}/debian stable main"
+      command: "echo 'deb https://artifacts.elastic.co/packages/{{ kibana_ver }}/apt stable main' | sudo tee -a /etc/apt/sources.list.d/elastic-6.x.list"
+
+    - name: Installation Kibana
+      apt:
+        name: "kibana"
+        state: "present"
+        install_recommends: no
+        update_cache: yes
+
+
+    - name: Vérification des droits du dossier Kibana
+      file:
+        path: "/opt/kibana"
+        owner: "kibana"
+        group: "kibana"
+
+    - name: Definition de l'adresse elasticsearch.url
+      replace:
+        path: "/opt/kibana/config/kibana.yml"
+        regexp: "^# elasticsearch.url: \"http://localhost:9200\""
+        replace: "elasticsearch.url: \"http://elasticsearch:9200\""
+
+
+    #- name: Recharger le daemon
+    #  command: "sudo systemctl daemon-reload"
+    #  systemd:
+    #    daemon-reload: yes
+
+
+    #- name: Vérification lancement Kibana demarrage de Ubuntu
+    #  command: "sudo systemctl enable kibana.service"
+    #  systemd:
+    #    name: kibana.service
+    #    enabled: yes
+    #    state: started
+
+
+    #- name: Initialisation d'un index pattern par défaut
+    #  uri:
+    #    url: http://localhost:5601/api/saved_objects/index-pattern
+    #    method: POST
+    #    body: "{'attributes':{'title':'logstash-*','timeFieldName':''@timestamp'}}'"
+    #    body_format: json
+    #    headers:
+    #      Content-Type: "application/json"
+    #      kbn-version: 6.3.0

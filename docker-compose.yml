@@ -1,0 +1,61 @@
+version: '2'
+
+services:
+  elasticsearch:
+    image: dockerelk_elastic
+    build:
+      context: Elastic/
+    volumes:
+      - "./.data:/usr/share/elasticsearch/data"
+      - ./elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      ES_JAVA_OPTS: "-Xmx1g -Xms256m"
+    networks:
+      - elk
+    restart: always
+
+  kibana:
+    image: dockerelk_kibana
+    build:
+      context: Kibana/
+    volumes:
+      - ./kibana/config/:/usr/share/kibana/config:ro
+    depends_on:
+      - elasticsearch
+    links:
+      - elasticsearch
+    ports:
+      - "5601:5601"
+    networks:
+      - elk
+    restart: always
+
+  logstash:
+    image: dockerelk_logstash
+    build:
+      context: Logstash/
+    depends_on:
+      - elasticsearch
+    volumes:
+      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
+      - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
+    links:
+      - elasticsearch
+    ports:
+      - "5044:5044"
+      - "10514:10514"
+      - "10514:10514/udp"
+    environment:
+      LS_JAVA_OPTS: "-Xmx1g -Xms256m"
+    networks:
+      - elk
+    restart: always
+
+
+networks:
+
+  elk:
+    driver: bridge

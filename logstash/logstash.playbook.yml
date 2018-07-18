@@ -1,0 +1,103 @@
+---
+- hosts: localhost
+  connection: local
+  become: true
+  vars:
+    - logstash_ver: '2.3'
+    - gosu_ver: '1.9'
+  tasks:
+    - name: Installation apt-transport-https
+      apt:
+        name: "apt-transport-https"
+        state: "present"
+
+    - name: Installation ca-certificates
+      apt:
+        name: "ca-certificates"
+        state: "latest"
+
+    - name: Installation dumb-init
+      apt:
+        deb: "https://github.com/Yelp/dumb-init/releases/download/v1.0.2/dumb-init_1.0.2_amd64.deb"
+
+    - name: Installation gosu
+      get_url:
+        url: "https://github.com/tianon/gosu/releases/download/{{ gosu_ver }}/gosu-amd64"
+        dest: "/usr/local/bin/gosu"
+        mode: 0755
+
+    - name: Installation RSysLog
+      apt:
+        name: "rsyslog"
+        state: "latest"
+    #
+    #- name: Installation Logstash Plugins Pre-Reqs
+    #  apt:
+    #    name: "{{ item }}"
+    #    state: "present"
+    #    install_recommends: no
+    #  with_items:
+    #    - 'libzmq3'
+
+    - name: Ensuring /usr/local/lib Exists
+      file:
+        path: "/usr/local/lib"
+        state: "directory"
+
+
+    - name: Installation JRE
+      apt:
+        name: "openjdk-8-jdk"
+        state: "present"
+
+    - name: Ajout de la clé du Repo Elasticsearch
+      apt_key:
+        url: "https://packages.elastic.co/GPG-KEY-elasticsearch"
+        #Pour les versions > 5.0
+        #url: "https://artifats.elastic.co/GPG-KEY-elasticsearch"
+        state: "present"
+
+    - name: Ajout du Repo Logstash
+      apt_repository:
+        repo: "deb https://packages.elastic.co/logstash/{{ logstash_ver }}/debian stable main"
+      #Pour les versions > 5.0
+      #command: "echo 'deb https://artifacts.elastic.co/packages/{{ logstash_ver }}/apt stable main' | sudo tee -a /etc/apt/sources.list.d/elastic-6.x.list"
+
+    - name: Installation de Logstash
+      apt:
+        name: "logstash"
+        state: "present"
+        install_recommends: no
+        update_cache: yes
+
+# We are doing this to redirect TCP/514 and UDP/514 to Logstash on TCP/10514
+    - name: Configuring Rsyslogd 50-default.conf
+      lineinfile:
+        line: "*.* @@127.0.0.1:10514"
+        path: "/etc/rsyslog.d/50-default.conf"
+        state: "present"
+
+# We are doing this to enable Rsyslogd to listen on tcp/514 and udp/514
+    - name: Configuration Rsyslogd pour l'ecoute des ports TCP/514 et UDP/514
+      lineinfile:
+        path: "/etc/rsyslog.conf"
+        line: "{{ item }}"
+        state: "present"
+      with_items:
+        - '$ModLoad imudp'
+        - '$UDPServerRun 514'
+        - '$ModLoad imtcp'
+        - '$InputTCPServerRun 514'
+
+    #- name: Recharger le daemon
+    #  command: "sudo systemctl daemon-reload"
+    #  systemd:
+    #    daemon-reload: yes
+    #    state: reloaded
+
+    #- name: Vérification lancement Logstash demarrage de Ubuntu
+    #  command: "sudo systemctl enable Logstash.service"
+    #  systemd:
+    #    name: kibana.service
+    #    enabled: yes
+    #    state: started

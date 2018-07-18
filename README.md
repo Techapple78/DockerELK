@@ -1,9 +1,10 @@
 # Elastic Stack (ELK) sur Docker
 
+Lance un stack "Elastic Stack" [Elastic stack](https://www.elastic.co/elk-stack) avec Docker and Docker Compose.
 
 
-Lance un stack Elastic Stack [Elastic stack](https://www.elastic.co/elk-stack) avec Docker and Docker Compose.
 
+## Contenu
 
 Basé sur les dépots officiel Docker, Elastic, Ansible:
 
@@ -12,14 +13,28 @@ Basé sur les dépots officiel Docker, Elastic, Ansible:
 * [kibana](https://github.com/elastic/kibana-docker)
 * [ansible](https://github.com/ansible/ansible)
 
-## Contenu
+Autres outils utilisés :
+* [gosu](https://github.com/tianon/gosu)
+* [dumb-init](https://github.com/Yelp/dumb-init) Superviseur de process et initialisateur de system pour Docker
+* [tini](https://github.com/krallin/tini) Protection de la création de process Zombie
+
 
 ## Pré-requis
 
 ### Configuration
 
 1. Installer [Docker](https://www.docker.com/community-edition#/download) version **1.10.0+**
+
 2. Installer [Docker Compose](https://docs.docker.com/compose/install/) version **1.6.0+**
+
+Installation de docker et docker-compose sur deb/ubuntu
+```console
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+sudo apt-get update
+sudo apt-get -y install docker-ce
+sudo apt-get -y install docker-compose
+```
 3. Cloner ce Repository
 
 ## Utilisation
@@ -67,7 +82,7 @@ Générer des logs :
 $ nc localhost 5044 < /path/to/logfile.log
 ```
 
-## Configuration initiale de Kibana par Ansible
+### Configuration initiale de Kibana par Ansible
 
  Création d'un index pattern par défaut dans Kibana par Ansible
  ```yml
@@ -81,10 +96,25 @@ $ nc localhost 5044 < /path/to/logfile.log
       Content-Type: "application/json"
       kbn-version: 6.3.0
 ```
-## Configuration initiale de Kibana par CURL (bash)
+### Configuration initiale de Kibana par CURL (bash)
 ```console
 $ curl -XPOST -D- 'http://localhost:5601/api/saved_objects/index-pattern' \
     -H 'Content-Type: application/json' \
     -H 'kbn-version: 6.3.0' \
     -d '{"attributes":{"title":"logstash-*","timeFieldName":"@timestamp"}}'
 ```
+
+
+
+elasticsearch.yml for configuring Elasticsearch
+jvm.options for configuring Elasticsearch JVM settings
+log4j2.properties for configuring Elasticsearch logging
+
+Path settings
+Cluster name
+Node name
+Network host
+Discovery settings
+Heap size
+Heap dump path
+GC logging

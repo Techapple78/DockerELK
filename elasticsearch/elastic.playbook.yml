@@ -1,0 +1,65 @@
+---
+- hosts: localhost
+  connection: local
+  become: true
+  vars:
+    - elastic_ver: '2.x'
+    - gosu_ver : '1.9'
+  tasks:
+    - name: Installation apt-transport-https
+      apt:
+        name: "apt-transport-https"
+        state: "present"
+
+    - name: Installation ca-certificates
+      apt:
+        name: "ca-certificates"
+        state: "latest"
+
+    - name: Installing dumb-init
+      apt:
+        deb: "https://github.com/Yelp/dumb-init/releases/download/v1.0.2/dumb-init_1.0.2_amd64.deb"
+
+    - name: Installing gosu
+      get_url:
+        url: "https://github.com/tianon/gosu/releases/download/{{ gosu_ver }}/gosu-amd64"
+        dest: "/usr/local/bin/gosu"
+        mode: 0755
+
+    - name: Installation JRE
+      apt:
+        name: "openjdk-8-jdk"
+        state: "present"
+
+    - name: Ajout de la clé du Repo Elasticsearch
+      apt_key:
+        url: "https://packages.elastic.co/GPG-KEY-elasticsearch"
+        #Pour les versions > 5.0
+        #url: "https://artifats.elastic.co/GPG-KEY-elasticsearch"
+
+        state: "present"
+
+    - name: Ajout du Repo Elasticsearch
+      apt_repository:
+        repo: "deb https://packages.elastic.co/elasticsearch/{{ elastic_ver }}/debian stable main"
+      #Pour les versions > 5.0
+      #command: "echo 'deb https://artifacts.elastic.co/packages/{{ elastic_ver }}/apt stable main' | sudo tee -a /etc/apt/sources.list.d/elastic-6.x.list"
+
+    - name: Installation Elasticsearch
+      apt:
+        name: "elasticsearch"
+        state: "present"
+        install_recommends: no
+        update_cache: yes
+
+    - name: Verifications des dossiers Elasticsearch
+      file:
+        path: "/usr/share/elasticsearch/{{ item }}"
+        state: "directory"
+        owner: "elasticsearch"
+        group: "elasticsearch"
+      with_items:
+        - 'data'
+        - 'logs'
+        - 'config'
+        - 'config/scripts'

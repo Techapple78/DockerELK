@@ -45,9 +45,9 @@
         state: "present"
 
     - name: Ajout du Repo Logstash
-      #apt_repository:
-      #  repo: "deb https://packages.elastic.co/logstash/{{ logstash_ver }}/debian stable main"
-      command: "echo 'deb https://artifacts.elastic.co/packages/{{ logstash_ver }}/apt stable main' | sudo tee -a /etc/apt/sources.list.d/elastic-6.x.list"
+      apt_repository:
+        repo: "deb https://packages.elastic.co/logstash/{{ logstash_ver }}/debian stable main"
+      #command: "echo 'deb https://artifacts.elastic.co/packages/{{ logstash_ver }}/apt stable main' | sudo tee -a /etc/apt/sources.list.d/elastic-6.x.list"
 
     - name: Installation de Logstash
       apt:

@@ -1,7 +1,7 @@
 version: '2'
 
 services:
-  elasticsearch:
+  Elastic:
     image: dockerelk_elastic
     build:
       context: Elastic/
@@ -18,7 +18,7 @@ services:
     networks:
       - elk
 
-  logstash:
+  Logstash:
     image: dockerelk_logstash
     build:
       context: Logstash/
@@ -36,7 +36,7 @@ services:
     networks:
       - elk
 
-  kibana:
+  Kibana:
     image: dockerelk_kibana
     build:
       context: Kibana/
